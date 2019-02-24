@@ -1,7 +1,7 @@
 ﻿using System;
 using CarvedRock.Web.Clients;
 using CarvedRock.Web.HttpClients;
-using GraphQL.Client;
+using GraphQL.Client.Http;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -20,7 +20,7 @@ namespace CarvedRock.Web
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
-            services.AddSingleton(t => new GraphQLClient(_config["CarvedRockApiUri"]));
+            services.AddSingleton(t => new GraphQLHttpClient(_config["CarvedRockApiUri"]));
             services.AddSingleton<ProductGraphClient>();
             services.AddHttpClient<ProductHttpClient>(o => o.BaseAddress = new Uri(_config["CarvedRockApiUri"]));
         }

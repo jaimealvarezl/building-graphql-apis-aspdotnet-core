@@ -1,16 +1,16 @@
 ﻿using System.Threading.Tasks;
 using CarvedRock.Web.Models;
-using GraphQL.Client;
 using GraphQL.Common.Request;
-using Newtonsoft.Json;
+using GraphQL.Common.Response;
+using GraphQL.Client.Http;
 
 namespace CarvedRock.Web.Clients
 {
     public class ProductGraphClient
     {
-        private readonly GraphQLClient _client;
+        private readonly GraphQLHttpClient _client;
 
-        public ProductGraphClient(GraphQLClient client)
+        public ProductGraphClient(GraphQLHttpClient client)
         {
             _client = client;
         }
@@ -26,13 +26,13 @@ namespace CarvedRock.Web.Clients
                       reviews { title review }
                     }
                 }",
-                Variables = new {productId = id}
+                Variables = new { productId = id }
             };
-            var response = await _client.PostAsync(query);
+            var response = await _client.SendQueryAsync(query);
             return response.GetDataFieldAs<ProductModel>("product");
         }
 
-        public async Task<ProductReviewModel> AddReview(ProductReviewInputModel review)
+        public async Task AddReview(ProductReviewInputModel review)
         {
             var query = new GraphQLRequest
             {
@@ -46,8 +46,22 @@ namespace CarvedRock.Web.Clients
                 }",
                 Variables = new { review }
             };
-            var response = await _client.PostAsync(query);
-            return response.GetDataFieldAs<ProductReviewModel>("createReview");
+            var response = await _client.SendQueryAsync(query);
+            if (response != null)
+            {
+                var reviewReturned = response.GetDataFieldAs<ProductReviewModel>("createReview");
+            }
+        }
+
+        public async Task SubscribeToUpdates()
+        {
+            var result = await _client.SendSubscribeAsync("subscription { reviewAdded { title productId } }");
+            result.OnReceive += Receive;
+        }
+
+        private void Receive(GraphQLResponse resp)
+        {
+            var review = resp.Data["reviewAdded"];
         }
     }
 }
